@@ -93,8 +93,7 @@ server <- function(input, output, session) {
             intermed <- dtheory::dstudy(myData(), col.scores = elem, from = input$from, to = input$to, by = input$by, rounded = input$rounded)
             final_df <- rbind(final_df, intermed)}
           return(final_df)
-          },
-    options = list(pageLength = -1)
+          }
     )
   })
   
