@@ -15,7 +15,7 @@ ui <- page_sidebar(
     helpText(
       "Run your own D-study from Generalizability Theory for a specified number of trials.
       
-      Please upload a data file which includes a column called 'Person', a column called 'Trial',
+      Please upload a .csv or .txt file which includes a column called 'Person', a column called 'Trial',
       and one or more columns for metrics."
     ),
     fileInput("file1", "Please choose a .csv or .txt file.", accept = c(".csv", ".txt")),
