@@ -9,19 +9,20 @@ library(stringr)
 library(DT)
 
 # User interface ----
-ui <- page_sidebar(
+ui <- page_navbar(
+  theme = bs_theme(version = 5, preset = "yeti"),
+  bg = "#008CBA",
   title = "Running a D-Study",
   sidebar = sidebar(
     helpText(
-      "Run your own D-study from Generalizability Theory for a specified number of trials.
-      
-      Please upload a .csv or .txt file which includes a column called 'Person', a column called 'Trial',
-      and one or more columns for metrics."
-    ),
+      "Run your own D-study from Generalizability Theory for a specified number of trials."),
+    helpText(
+      "Please upload a .csv or .txt file which includes a column called 'Person', a column called 'Trial',
+      and one or more columns for metrics."),
     fileInput("file1", "Please choose a .csv or .txt file.", accept = c(".csv", ".txt")),
     selectInput(
       "var",
-      "Select Variable for Reliability Testing",
+      "Select Variable(s) for Reliability Testing",
       NULL,
       multiple = TRUE,
       selectize = TRUE),
@@ -73,7 +74,7 @@ server <- function(input, output, session) {
   
   observe({
     updateSelectInput(session, "var",
-                      label = "Select Variable for Reliability Testing",
+                      label = "Select Variable(s) for Reliability Testing",
                       choices = colnames(myData())[!(colnames(myData()) %in% excl)],
                       selected = NULL)
     })
