@@ -7,6 +7,7 @@ library(gtheory)
 library(dtheory)
 library(stringr)
 library(DT)
+library(plotly)
 
 # User interface ----
 ui <- page_navbar(
@@ -39,7 +40,7 @@ ui <- page_navbar(
     numericInput(
       "by",
       "By (Interval for Testing Trials)",
-      value = 2,
+      value = 1,
       min = 1),
     numericInput(
       "rounded",
@@ -54,7 +55,7 @@ ui <- page_navbar(
   ),
   card(
     card_header("D-Study Plot"),
-    plotOutput("plot")
+    plotlyOutput("plot")
   )
 )
 
@@ -101,34 +102,43 @@ server <- function(input, output, session) {
     )
   })
   
-  output$plot <- renderPlot({
+  output$plot <- renderPlotly({
     if (length(input$var) == 0) {
       return(NULL)
     } else if (length(input$var) == 1) {
-      new_df <- dtheory::dstudy(myData(), col.scores = input$var, from = input$from, to = input$to, by = input$by, rounded = input$rounded) %>%
-        pivot_longer(cols = everything(), names_to = "trial_number", values_to = "g_coefs") %>% 
-        separate(col = trial_number, into = c("n", "number"), sep = " = ") %>%
+      new_df <- dtheory::dstudy(myData(), col.scores = input$var, from = input$from, to = input$to, by = input$by, rounded = input$rounded)
+      new_df$Metric <- rownames(new_df)
+      new_df <- new_df %>%
+        pivot_longer(cols = -Metric, names_to = "trial_number", values_to = "Phi Coefficient") %>% 
+        separate(col = trial_number, into = c("n", "Number of Trials"), sep = " = ") %>%
         select(-"n")
-      dplot <- ggplot(data = new_df, aes(x = number, y = g_coefs)) + 
-        geom_point(size = 3, color = "blue") + 
+      new_df$`Number of Trials` <- as.integer(new_df$`Number of Trials`)
+      dplot <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Phi Coefficient`, color = Metric)) + 
+        geom_point(size = 2.5) + 
         labs(x = "Number of Trials", y = "Phi Coefficient") + 
-        theme(text = element_text(family = "Open Sans", color = "black", size = 16))
-      return(dplot)
+        scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
+        theme(text = element_text(family = "Open Sans", color = "black", size = 14)) + 
+        guides(color = F)
+      dplotly <- ggplotly(dplot, tooltip = c("x", "y", "Metric"))
+      return(dplotly)
     } else if (length(input$var) > 1) {
       final_df <- dtheory::dstudy(myData(), col.scores = input$var[1], from = input$from, to = input$to, by = input$by, rounded = input$rounded)
       for (elem in input$var[2:length(input$var)]) {
         intermed <- dtheory::dstudy(myData(), col.scores = elem, from = input$from, to = input$to, by = input$by, rounded = input$rounded)
         final_df <- rbind(final_df, intermed)}
-      final_df$`Metric Name` <- rownames(final_df)
+      final_df$Metric <- rownames(final_df)
       new_df <-  final_df %>%
-        pivot_longer(cols = -`Metric Name`, names_to = "trial_number", values_to = "g_coefs") %>% 
-        separate(col = trial_number, into = c("n", "number"), sep = " = ") %>%
+        pivot_longer(cols = -Metric, names_to = "trial_number", values_to = "Phi Coefficient") %>% 
+        separate(col = trial_number, into = c("n", "Number of Trials"), sep = " = ") %>%
         select(-"n")
-      dplot <- ggplot(data = new_df, aes(x = number, y = g_coefs, color = `Metric Name`, shape = `Metric Name`)) + 
-        geom_point(size = 3) + 
+      new_df$`Number of Trials` <- as.integer(new_df$`Number of Trials`)
+      dplot <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Phi Coefficient`, color = Metric, shape = Metric)) + 
+        geom_point(size = 2.5) + 
         labs(x = "Number of Trials", y = "Phi Coefficient") + 
-        theme(text = element_text(family = "Open Sans", color = "black", size = 16))
-      return(dplot)
+        scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
+        theme(text = element_text(family = "Open Sans", color = "black", size = 14))
+      dplotly <- ggplotly(dplot, tooltip = c("colour", "x", "y"))
+      return(dplotly)
     }
   })
   
