@@ -49,14 +49,19 @@ ui <- page_navbar(
       min = 1
     )
   ),
-  card(
-    card_header("D-Study Table"),
-    DT::dataTableOutput("g_coefs")
-  ),
-  card(
-    card_header("D-Study Plot"),
-    plotlyOutput("plot")
-  )
+    card(
+      card_header("D-Study Table"),
+      DT::dataTableOutput("g_coefs")
+    ),
+    layout_columns(
+    card(
+      card_header("Reliability Plot"),
+      plotlyOutput("plot")),
+    card(
+      card_header("Error Variance Plot"),
+      plotlyOutput("plot2"))
+    )
+    
 )
 
 # Server logic ----
@@ -83,7 +88,6 @@ server <- function(input, output, session) {
                       choices = colnames(myData())[!(colnames(myData()) %in% excl)],
                       selected = NULL)
     })
-  
   
   output$g_coefs <- DT::renderDataTable({
     DT::datatable(
@@ -117,7 +121,7 @@ server <- function(input, output, session) {
         geom_point(size = 2.5) + 
         labs(x = "Number of Trials", y = "Phi Coefficient") + 
         scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
-        theme(text = element_text(family = "Open Sans", color = "black", size = 14)) + 
+        theme(text = element_text(family = "Open Sans", color = "black", size = 13)) + 
         guides(color = F)
       dplotly <- ggplotly(dplot, tooltip = c("x", "y", "Metric"))
       return(dplotly)
@@ -136,9 +140,55 @@ server <- function(input, output, session) {
         geom_point(size = 2.5) + 
         labs(x = "Number of Trials", y = "Phi Coefficient") + 
         scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
-        theme(text = element_text(family = "Open Sans", color = "black", size = 14))
+        theme(text = element_text(family = "Open Sans", color = "black", size = 13)) + 
+        guides(color = "none", shape = "none")
       dplotly <- ggplotly(dplot, tooltip = c("colour", "x", "y"))
       return(dplotly)
+    }
+  })
+  
+  output$plot2 <- renderPlotly({
+    if (length(input$var) == 0) {
+      return(NULL)
+    } else if (length(input$var) == 1) {
+      new_df <- dtheory::dstudy(myData(), col.scores = input$var, from = input$from, to = input$to, by = input$by, rounded = input$rounded)
+      new_df$Metric <- rownames(new_df)
+      new_df <- new_df %>%
+        pivot_longer(cols = -Metric, names_to = "trial_number", values_to = "Phi Coefficient") %>% 
+        separate(col = trial_number, into = c("n", "Number of Trials"), sep = " = ") %>%
+        select(-"n")
+      new_df$`Number of Trials` <- as.integer(new_df$`Number of Trials`)
+      new_df <- new_df %>%
+        mutate(`Error Variance` = (1 - `Phi Coefficient`))
+      dplot2 <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Error Variance`, color = Metric)) + 
+        geom_point(size = 2.5) + 
+        labs(x = "Number of Trials", y = "Error Variance (% of Total)") + 
+        scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
+        theme(text = element_text(color = "black", size = 13)) + 
+        guides(color = "none")
+      dplotly2 <- ggplotly(dplot2, tooltip = c("x", "y", "Metric"))
+      return(dplotly2)
+    } else if (length(input$var) > 1) {
+      final_df <- dtheory::dstudy(myData(), col.scores = input$var[1], from = input$from, to = input$to, by = input$by, rounded = input$rounded)
+      for (elem in input$var[2:length(input$var)]) {
+        intermed <- dtheory::dstudy(myData(), col.scores = elem, from = input$from, to = input$to, by = input$by, rounded = input$rounded)
+        final_df <- rbind(final_df, intermed)}
+      final_df$Metric <- rownames(final_df)
+      new_df <-  final_df %>%
+        pivot_longer(cols = -Metric, names_to = "trial_number", values_to = "Phi Coefficient") %>% 
+        separate(col = trial_number, into = c("n", "Number of Trials"), sep = " = ") %>%
+        select(-"n")
+      new_df$`Number of Trials` <- as.integer(new_df$`Number of Trials`)
+      new_df <- new_df %>%
+        mutate(`Error Variance` = (1 - `Phi Coefficient`))
+      dplot2 <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Error Variance`, color = Metric, shape = Metric)) + 
+        geom_point(size = 2.5) + 
+        labs(x = "Number of Trials", y = "Error Variance (% of Total)") + 
+        scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
+        theme(text = element_text(family = "Open Sans", color = "black", size = 13)) + 
+        guides(color = "none", shape = "none")
+      dplotly2 <- ggplotly(dplot2, tooltip = c("colour", "x", "y"))
+      return(dplotly2)
     }
   })
   
