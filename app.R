@@ -159,8 +159,8 @@ server <- function(input, output, session) {
         select(-"n")
       new_df$`Number of Trials` <- as.integer(new_df$`Number of Trials`)
       new_df <- new_df %>%
-        mutate(`Error Variance` = (1 - `Phi Coefficient`))
-      dplot2 <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Error Variance`, color = Metric)) + 
+        mutate(`Error Variance (%)` = (1 - `Phi Coefficient`))
+      dplot2 <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Error Variance (%)`, color = Metric)) + 
         geom_point(size = 2.5) + 
         labs(x = "Number of Trials", y = "Error Variance (% of Total)") + 
         scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
@@ -180,8 +180,8 @@ server <- function(input, output, session) {
         select(-"n")
       new_df$`Number of Trials` <- as.integer(new_df$`Number of Trials`)
       new_df <- new_df %>%
-        mutate(`Error Variance` = (1 - `Phi Coefficient`))
-      dplot2 <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Error Variance`, color = Metric, shape = Metric)) + 
+        mutate(`Error Variance (%)` = (1 - `Phi Coefficient`))
+      dplot2 <- ggplot(data = new_df, aes(x = `Number of Trials`, y = `Error Variance (%)`, color = Metric, shape = Metric)) + 
         geom_point(size = 2.5) + 
         labs(x = "Number of Trials", y = "Error Variance (% of Total)") + 
         scale_x_continuous(breaks = seq(input$from, input$to, input$by)) + 
